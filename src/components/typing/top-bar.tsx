@@ -6,26 +6,32 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useTypingStats } from "@/hooks/use-typing-stats";
 import { useTypingStore } from "@/store/store";
+import type { KEYBOARD_LAYOUT } from "@/types/types";
 
 export const TopBar = () => {
-  const { distribution, changeDistribution } = useTypingStore((state) => state);
+  const { distribution, changeDistribution, stats } = useTypingStore((state) => state);
 
   return (
     <div className="w-full flex justify-between py-3">
       <div>
-        <p>WPS: 61</p>
+        <p>WPM: {stats.wps}</p>
+        <p>RWPM: {stats.rawWps}</p>
+        <p>STREAK: {stats.streak}</p>
+        <p>MSTREAK: {stats.maxStreak}</p>
+        <p>accuracy: {stats.accuracy}</p>
       </div>
 
-      <Select onValueChange={(value) => changeDistribution(value)}>
+      <Select onValueChange={(value: KEYBOARD_LAYOUT) => changeDistribution(value)}>
         <SelectTrigger>
           <SelectValue placeholder={distribution} />
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>
-            <SelectItem value="QWERTY">Qwerty</SelectItem>
-            <SelectItem value="COLEMAK">Colemak</SelectItem>
-            <SelectItem value="DVORAK">Dvorak</SelectItem>
+            <SelectItem value="qwerty">Qwerty</SelectItem>
+            <SelectItem value="colemak">Colemak</SelectItem>
+            <SelectItem value="dvorak">Dvorak</SelectItem>
           </SelectGroup>
         </SelectContent>
       </Select>
