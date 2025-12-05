@@ -37,6 +37,7 @@ export const useTyping = ({ distribution }: { distribution: KEYBOARD_LAYOUT }) =
     resetSession()
   };
 
+
   const handleKeyPress = useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>) => {
       const { key } = e;
@@ -55,11 +56,11 @@ export const useTyping = ({ distribution }: { distribution: KEYBOARD_LAYOUT }) =
 
       const isCorrect = mappedKey === expected;
 
-      if (isCorrect) {
-        setCurrent(prev => Math.min(prev + 1, chars.length));
-      } else {
+      if (!isCorrect) {
         markWrong(current);
       }
+
+      setCurrent(prev => Math.min(prev + 1, chars.length));
 
       registerKeyEvent({
         index: current,
@@ -94,4 +95,4 @@ export const useTyping = ({ distribution }: { distribution: KEYBOARD_LAYOUT }) =
     handleKeyPress,
     reset,
   };
-};;
+};

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { throttle } from "es-toolkit/function";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { throttle } from "es-toolkit";
 import { useTypingStore } from "@/store/store";
 
 interface EventInterface {
@@ -11,8 +11,7 @@ interface EventInterface {
 }
 
 export const useTypingStats = () => {
-  // global store
-  const { stats, saveStats } = useTypingStore(state => state)
+  const saveStats = useTypingStore(state => state.saveStats);
 
   const [wps, setWps] = useState<number | null>(null);
   const [rawWps, setRawWps] = useState<number | null>(null);
@@ -20,77 +19,93 @@ export const useTypingStats = () => {
   const [errors, setErrors] = useState<EventInterface[]>([]);
   const [streak, setStreak] = useState<number>(0);
   const [maxStreak, setMaxStreak] = useState<number>(0);
-
-  // session state
   const [status, setStatus] = useState<"idle" | "running" | "finished">("idle");
   const [events, setEvents] = useState<EventInterface[]>([]);
   const [startTime, setStartTime] = useState<number | null>(null);
 
-  const calculateAccuracy = throttle((eventsArr: EventInterface[]) => {
-    if (eventsArr.length === 0) {
-      setAccuracy(100);
-      return;
-    }
+  const wpsRef = useRef(wps);
+  const rawWpsRef = useRef(rawWps);
+  const accuracyRef = useRef(accuracy);
+  const streakRef = useRef(streak);
+  const maxStreakRef = useRef(maxStreak);
 
-    const corrects = eventsArr.filter(ev => ev.isCorrect).length;
-    setAccuracy((corrects / eventsArr.length) * 100);
-  }, 1000);
+  useEffect(() => { wpsRef.current = wps; }, [wps]);
+  useEffect(() => { rawWpsRef.current = rawWps; }, [rawWps]);
+  useEffect(() => { accuracyRef.current = accuracy; }, [accuracy]);
+  useEffect(() => { streakRef.current = streak; }, [streak]);
+  useEffect(() => { maxStreakRef.current = maxStreak; }, [maxStreak]);
 
-  const calculateWps = throttle(
-    (eventsArr: EventInterface[], start: number | null, end: number | null) => {
-      if (!start) return;
+  useEffect(() => {
+    if (status === "idle") return;
 
-      const now = end ?? Date.now();
-      const seconds = (now - start) / 1000;
+    saveStats({
+      status,
+      wps: wpsRef.current,
+      rawWps: rawWpsRef.current,
+      accuracy: accuracyRef.current ?? 100,
+      streak: streakRef.current,
+      maxStreak: maxStreakRef.current,
+      // errors: status === "finished" ? errors : undefined,
+    });
+  }, [
+    status,
+    wps,
+    rawWps,
+    accuracy,
+    streak,
+    maxStreak,
+    errors.length,
+  ]);
 
-      if (seconds <= 0) return;
-
-      const correctsChars = eventsArr.filter(ev => ev.isCorrect).length;
-      const totalChars = eventsArr.length;
-
-      const wpm = (correctsChars * 60) / (5 * seconds);
-      const raw = (totalChars * 60) / (5 * seconds);
-
-      setWps(Number.isFinite(wpm) ? wpm : 0);
-      setRawWps(Number.isFinite(raw) ? raw : 0);
-
-      saveStats({
-        ...stats,
-        wps,
-        rawWps
-      })
-    },
-    1000
+  // Throttles
+  const calculateAccuracy = useCallback(
+    throttle((eventsArr: EventInterface[]) => {
+      if (eventsArr.length === 0) {
+        setAccuracy(100);
+        return;
+      }
+      const correct = eventsArr.filter(e => e.isCorrect).length;
+      setAccuracy((correct / eventsArr.length) * 100);
+    }, 500),
+    []
   );
 
-  const checkStreak = (event: EventInterface) => {
+  const calculateWps = useCallback(
+    throttle((eventsArr: EventInterface[], start: number | null, end?: number) => {
+      if (!start) return;
+      const now = end ?? Date.now();
+      const seconds = (now - start) / 1000;
+      if (seconds <= 0) return;
+
+      const correctChars = eventsArr.filter(e => e.isCorrect).length;
+      const totalChars = eventsArr.length;
+
+      const wpm = (correctChars / 5) * (60 / seconds);
+      const raw = (totalChars / 5) * (60 / seconds);
+
+      setWps(Math.round(wpm) || 0);
+      setRawWps(Math.round(raw) || 0);
+    }, 800),
+    []
+  );
+
+  const checkStreak = useCallback((event: EventInterface) => {
     if (!event.isCorrect) {
       setStreak(0);
       return;
     }
-
     setStreak(prev => {
       const next = prev + 1;
       setMaxStreak(m => Math.max(m, next));
       return next;
     });
-
-    saveStats({
-      ...stats,
-      streak,
-      maxStreak
-    })
-  };
-
+  }, []);
 
   const startSession = () => {
     if (status !== "idle") return;
-
     const now = Date.now();
     setStartTime(now);
     setStatus("running");
-
-    // reset runtime stats
     setEvents([]);
     setErrors([]);
     setStreak(0);
@@ -105,43 +120,44 @@ export const useTypingStats = () => {
 
     const event: EventInterface = { ...data, timestamp: Date.now() };
     const newEvents = [...events, event];
-
     setEvents(newEvents);
 
     checkStreak(event);
-
     if (!event.isCorrect) {
       setErrors(prev => [...prev, event]);
     }
 
-    calculateWps(newEvents, startTime, null);
+    calculateWps(newEvents, startTime);
     calculateAccuracy(newEvents);
   };
 
-  const finishSession = () => {
-    console.log("entro en finishSession con status:", status)
+  const finishSession = useCallback(() => {
     if (status !== "running") return;
 
-    const end = Date.now();
+    const endTime = Date.now();
     setStatus("finished");
 
-    calculateWps(events, startTime, end);
-    calculateAccuracy(events);
+    calculateWps.flush();
+    calculateAccuracy.flush();
 
-    saveStats({
-      status,
-      wps,
-      rawWps,
-      accuracy,
-      streak,
-      maxStreak,
-    })
-  };
+    if (startTime && events.length > 0) {
+      const seconds = (endTime - startTime) / 1000;
+      const correctChars = events.filter(e => e.isCorrect).length;
+      const totalChars = events.length;
+
+      const finalWpm = (correctChars / 5) * (60 / seconds);
+      const finalRaw = (totalChars / 5) * (60 / seconds);
+      const finalAcc = (correctChars / totalChars) * 100;
+
+      setWps(Math.round(finalWpm) || 0);
+      setRawWps(Math.round(finalRaw) || 0);
+      setAccuracy(finalAcc);
+    }
+  }, [status, startTime, events, calculateWps, calculateAccuracy]);
 
   const resetSession = () => {
     setStatus("idle");
     setStartTime(null);
-
     setEvents([]);
     setErrors([]);
     setStreak(0);
@@ -149,15 +165,6 @@ export const useTypingStats = () => {
     setWps(null);
     setRawWps(null);
     setAccuracy(null);
-
-    saveStats({
-      status: "idle",
-      wps: null,
-      rawWps: null,
-      accuracy: null,
-      streak: 0,
-      maxStreak: 0,
-    })
   };
 
   return {
@@ -167,12 +174,9 @@ export const useTypingStats = () => {
     errors,
     streak,
     maxStreak,
-
-    // methods
     startSession,
     registerKeyEvent,
     finishSession,
     resetSession,
   };
 };
-
