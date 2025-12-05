@@ -12,7 +12,7 @@ interface EventInterface {
 
 export const useTypingStats = () => {
   // global store
-  const { saveStats } = useTypingStore(state => state)
+  const { stats, saveStats } = useTypingStore(state => state)
 
   const [wps, setWps] = useState<number | null>(null);
   const [rawWps, setRawWps] = useState<number | null>(null);
@@ -53,6 +53,12 @@ export const useTypingStats = () => {
 
       setWps(Number.isFinite(wpm) ? wpm : 0);
       setRawWps(Number.isFinite(raw) ? raw : 0);
+
+      saveStats({
+        ...stats,
+        wps,
+        rawWps
+      })
     },
     1000
   );
@@ -68,6 +74,12 @@ export const useTypingStats = () => {
       setMaxStreak(m => Math.max(m, next));
       return next;
     });
+
+    saveStats({
+      ...stats,
+      streak,
+      maxStreak
+    })
   };
 
 

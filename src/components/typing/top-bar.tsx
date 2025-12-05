@@ -1,40 +1,44 @@
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useTypingStats } from "@/hooks/use-typing-stats";
-import { useTypingStore } from "@/store/store";
-import type { KEYBOARD_LAYOUT } from "@/types/types";
+"use client"
+
+import { useTypingStore } from "@/store/store"
 
 export const TopBar = () => {
-  const { distribution, changeDistribution, stats } = useTypingStore((state) => state);
+  const { distribution, changeDistribution } = useTypingStore()
 
   return (
-    <div className="w-full flex justify-between py-3">
-      <div>
-        <p>WPM: {stats.wps}</p>
-        <p>RWPM: {stats.rawWps}</p>
-        <p>STREAK: {stats.streak}</p>
-        <p>MSTREAK: {stats.maxStreak}</p>
-        <p>accuracy: {stats.accuracy}</p>
-      </div>
+    <div className="flex items-center justify-between mb-12 pb-6 border-b border-border">
+      <h1 className="text-2xl font-bold tracking-tight">Min</h1>
 
-      <Select onValueChange={(value: KEYBOARD_LAYOUT) => changeDistribution(value)}>
-        <SelectTrigger>
-          <SelectValue placeholder={distribution} />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            <SelectItem value="qwerty">Qwerty</SelectItem>
-            <SelectItem value="colemak">Colemak</SelectItem>
-            <SelectItem value="dvorak">Dvorak</SelectItem>
-          </SelectGroup>
-        </SelectContent>
-      </Select>
+      <div className="flex gap-2">
+        <button
+          onClick={() => changeDistribution("qwerty")}
+          className={`px-3 py-1.5 text-sm font-medium transition-colors ${distribution === "qwerty"
+            ? "text-foreground bg-primary/10"
+            : "text-muted-foreground hover:text-foreground"
+            }`}
+        >
+          qwerty
+        </button>
+        <button
+          onClick={() => changeDistribution("dvorak")}
+          className={`px-3 py-1.5 text-sm font-medium transition-colors ${distribution === "dvorak"
+            ? "text-foreground bg-primary/10"
+            : "text-muted-foreground hover:text-foreground"
+            }`}
+        >
+          dvorak
+        </button>
+        <button
+          onClick={() => changeDistribution("colemak")}
+          className={`px-3 py-1.5 text-sm font-medium transition-colors ${distribution === "colemak"
+            ? "text-foreground bg-primary/10"
+            : "text-muted-foreground hover:text-foreground"
+            }`}
+        >
+          colemak
+        </button>
+      </div>
     </div>
-  );
-};
+  )
+}
+

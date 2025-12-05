@@ -41,7 +41,9 @@ export const useTyping = ({ distribution }: { distribution: KEYBOARD_LAYOUT }) =
     (e: React.KeyboardEvent<HTMLDivElement>) => {
       const { key } = e;
 
-      if (key.length > 1) return;
+      if (key.length > 1 && key !== "Escape") return;
+
+      if (key === "Escape") return reset();
 
       setStatus("running")
       if (current === 0) startSession();
