@@ -32,6 +32,7 @@ export const TypingStats = () => {
     <Rnd
       bounds="parent"
       dragHandleClassName="drag-bar"
+      //@ts-ignore
       default={{
         x: 200, y: 600
       }}
