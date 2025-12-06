@@ -1,13 +1,9 @@
-interface TypingStatsProps {
-  wps: number | null
-  rawWps: number | null
-  accuracy: number | null
-  streak: number
-  maxStreak: number
-  errors: Array<{ index: number; expected: string; pressed: string; isCorrect: boolean; timestamp: number }>
-}
+import { useTypingStore } from "@/store/store"
+import { Rnd } from "react-rnd"
 
-export const TypingStats = ({ wps, rawWps, accuracy, streak, maxStreak, errors }: TypingStatsProps) => {
+export const TypingStats = () => {
+  const { wps, rawWps, accuracy, streak, maxStreak } = useTypingStore(state => state.stats)
+  const errors: any[] = []
   const stats = [
     {
       label: "WPM",
@@ -33,8 +29,15 @@ export const TypingStats = ({ wps, rawWps, accuracy, streak, maxStreak, errors }
   ]
 
   return (
-    <div className="space-y-12">
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
+    <Rnd
+      bounds="parent"
+      dragHandleClassName="drag-bar"
+      default={{
+        x: 200, y: 600
+      }}
+      className="bg-stone-900 border shadow overflow-hidden">
+      <div className="bg-secondary h-6 border-b hover:cursor-grab drag-bar" />
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-8 py-8">
         {stats.map((stat) => (
           <div key={stat.label} className="text-center space-y-2 border-l border-border pl-6 md:border-l-0 md:pl-0">
             <div className="text-4xl md:text-5xl font-bold text-foreground tracking-tight">
@@ -63,6 +66,6 @@ export const TypingStats = ({ wps, rawWps, accuracy, streak, maxStreak, errors }
           </div>
         </div>
       )}
-    </div>
+    </Rnd>
   )
 }
