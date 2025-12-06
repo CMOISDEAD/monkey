@@ -14,6 +14,7 @@ export const useTyping = ({ distribution }: { distribution: KEYBOARD_LAYOUT }) =
   const [focus, setFocus] = useState(false);
 
   const {
+    removeEvent,
     startSession,
     registerKeyEvent,
     finishSession,
@@ -30,6 +31,17 @@ export const useTyping = ({ distribution }: { distribution: KEYBOARD_LAYOUT }) =
     });
   };
 
+  const backspace = () => {
+    const prevIndex = Math.max(current - 1, 0)
+    setCurrent(prevIndex)
+    removeEvent(prevIndex)
+    setWrong(prev => {
+      const next = new Set(prev);
+      next.delete(current - 1)
+      return next
+    })
+  }
+
   const reset = () => {
     setStatus("idle")
     setCurrent(0);
@@ -42,11 +54,14 @@ export const useTyping = ({ distribution }: { distribution: KEYBOARD_LAYOUT }) =
     (e: React.KeyboardEvent<HTMLDivElement>) => {
       const { key } = e;
 
-      if (key.length > 1 && key !== "Escape") return;
-
       if (key === "Escape") return reset();
 
+      if (key === "Backspace") return backspace();
+
+      if (key.length > 1) return;
+
       setStatus("running")
+
       if (current === 0) startSession();
 
       const chars = words.current;

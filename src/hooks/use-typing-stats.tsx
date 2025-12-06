@@ -57,6 +57,10 @@ export const useTypingStats = () => {
     errors.length,
   ]);
 
+  const removeEvent = (index: number) => {
+    setEvents((prev) => prev.filter(ev => ev.index !== index))
+  }
+
   // Throttles
   const calculateAccuracy = useCallback(
     throttle((eventsArr: EventInterface[]) => {
@@ -178,5 +182,6 @@ export const useTypingStats = () => {
     registerKeyEvent,
     finishSession,
     resetSession,
+    removeEvent,
   };
 };
