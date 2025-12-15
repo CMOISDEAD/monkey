@@ -49,7 +49,7 @@ export const Typing = () => {
               onKeyDown={handleKeyPress}
               className="relative overflow-hidden focus:outline-none transition-colors"
             >
-              <div className="relative cursor-text min-h-64 flex flex-wrap content-center gap-2 p-5">
+              <div className="relative cursor-text  flex flex-wrap content-center gap-2 p-5">
                 {!focus && (
                   <div className="absolute inset-0 bg-background/5 backdrop-blur flex items-center justify-center gap-3 z-10">
                     <Pointer className="size-5 text-muted-foreground" />

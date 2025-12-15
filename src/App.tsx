@@ -6,7 +6,7 @@ import { ThemeSelector } from "./components/themes/themes-selector";
 
 export default function App() {
   return (
-    <div className="min-h-screen font-mono flex flex-col bg-stone-900">
+    <div className="min-h-screen font-mono flex flex-col bg-linear-to-br from-stone-900 to-stone-950">
       <header className="flex justify-between px-8 py-2">
         <h1 className="text-primary">Min</h1>
         <ul className="flex gap-8 items-center">
